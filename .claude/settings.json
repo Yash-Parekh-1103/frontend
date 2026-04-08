@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm dev:*)",
+      "Bash(curl http://localhost:3001/health)",
+      "Bash(pnpm install:*)"
+    ]
+  }
+}

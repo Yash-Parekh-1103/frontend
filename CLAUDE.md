@@ -2,232 +2,212 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Important Next.js Version Notice
+## Project Overview
 
-⚠️ **This project uses Next.js 16.2.2 with breaking changes** - APIs, conventions, and file structure may differ from training data. Always read the relevant guide in `node_modules/next/dist/docs/` before writing any Next.js code. Heed deprecation notices.
+A movie streaming platform monorepo with both frontend and backend applications. Users can upload movies via URL, watch content, create playlists, and discover content through AI-powered recommendations and semantic search.
+
+**Architecture**: Monorepo with separate frontend (Next.js) and backend (Express) applications.
 
 ## Development Commands
 
+### Root Level Commands
 ```bash
-# Start development server
-pnpm dev            # Preferred package manager
-# Alternative: npm run dev, yarn dev, or bun dev
+# Navigate to specific application
+cd frontend    # Next.js 16.2.2 application
+cd backend     # Express TypeScript API
 
-# Build for production
-pnpm build
-
-# Start production server
-pnpm start
-
-# Run linting
-pnpm lint
+# No root-level package.json - work in individual directories
 ```
 
-## Movie Platform Overview
+### Frontend (Next.js 16.2.2)
+```bash
+cd frontend
 
-A free streaming platform where users can upload movies via URL, watch content, create playlists, and discover content through AI-powered recommendations and semantic search.
+# Development
+pnpm dev            # Start dev server on :3000
+pnpm build          # Build for production
+pnpm start          # Start production server
+pnpm lint           # Run ESLint
 
-### Tech Stack
-- **Frontend**: Next.js 16.2.2 with App Router
-- **Backend**: Express with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Vector DB**: Qdrant for AI features
-- **Authentication**: Clerk
-- **Styling**: Tailwind CSS v4
-- **Package Manager**: pnpm
-
----
-
-## 🗄️ Database Schema (Minimal & Clean)
-
-### **Core Tables**
-```sql
-users
-├── id (UUID, Primary Key)
-├── username (string)
-├── email (string, unique) -- Used for fetching user data
-├── updated_at (timestamp)
-
-movies
-├── id (UUID, Primary Key)
-├── title (string)
-├── description (text)
-├── genre (string)
-├── release_year (integer)
-├── cast (JSON array)
-├── video_url (string)
-├── poster_url (string)
-├── duration (minutes)
-├── uploaded_by (user_id FK)
-├── average_rating (decimal)
-
-watchlists (User Playlists)
-├── id (UUID, Primary Key)
-├── user_id (FK to users.id)
-├── movie_id (FK to movies.id)
-├── added_at (timestamp)
-
-user_behavior (For AI Features)
-├── id (UUID, Primary Key)
-├── user_id (FK to users.id)
-├── movie_id (FK to movies.id)
-├── action_type (enum: watch, like, download, etc.)
-├── watch_progress (seconds)
-├── session_duration (seconds)
-├── created_at (timestamp)
-
-download_history
-├── id (UUID, Primary Key)
-├── user_id (FK to users.id)
-├── movie_id (FK to movies.id)
-├── download_url (string)
-├── downloaded_at (timestamp)
+# ⚠️ IMPORTANT: Next.js 16.2.2 has breaking changes
+# Always check node_modules/next/dist/docs/ before writing Next.js code
 ```
 
----
+### Backend (Express + TypeScript)
+```bash
+cd backend
 
-## 🏗️ Feature-Based Architecture
+# Development  
+pnpm dev            # Start dev server with nodemon on :3001
+pnpm build          # Compile TypeScript to dist/
+pnpm start          # Start production server from dist/
 
-### **Frontend Structure (Next.js 16)**
-```
-src/
-├── app/                           # App Router
-│   ├── layout.tsx                 # Root layout
-│   ├── page.tsx                   # Home page
-│   ├── movies/
-│   │   ├── page.tsx               # Movies listing
-│   │   └── [id]/page.tsx          # Movie details
-│   ├── search/
-│   │   └── page.tsx               # Search page
-│   ├── profile/
-│   │   └── page.tsx               # User profile with playlist
-│   └── upload/
-│       └── page.tsx               # Movie upload
-├── components/
-│   ├── ui/                        # Shadcn/UI components
-│   ├── VideoPlayer/               # Custom video player
-│   ├── MovieCard/                 # Movie display
-│   ├── SearchBox/                 # Search components
-│   └── Navigation/                # Layout components
-├── lib/
-│   ├── api.ts                     # API client
-│   ├── clerk.ts                   # Clerk config
-│   └── utils.ts                   # Utilities
-└── types/                         # TypeScript types
+# Database Operations (Drizzle)
+pnpm db:generate    # Generate migrations from schema
+pnpm db:migrate     # Run pending migrations  
+pnpm db:push        # Push schema directly to DB (dev only)
+pnpm db:studio      # Open Drizzle Studio
+
+# Health check
+curl http://localhost:3001/health
 ```
 
-### **Backend Structure (Express + TypeScript)**
+## Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| **Frontend** | Next.js 16.2.2 (App Router), React 19.2.4, Tailwind CSS v4 |
+| **Backend** | Express 5.2.1, TypeScript, Node.js |
+| **Database** | PostgreSQL with Drizzle ORM |
+| **Vector DB** | Qdrant (for AI features) |
+| **Authentication** | Clerk |
+| **Package Manager** | pnpm |
+| **Validation** | Zod schemas |
+
+## Monorepo Architecture
+
+### Directory Structure
 ```
-src/
-├── features/
-│   ├── auth/
-│   │   ├── auth.router.ts         # Auth routes
-│   │   └── auth.controller.ts     # Auth logic
-│   ├── movies/
-│   │   ├── movies.router.ts       # Movie CRUD routes
-│   │   └── movies.controller.ts   # Movie business logic
-│   ├── search/
-│   │   ├── search.router.ts       # Search endpoints
-│   │   └── search.controller.ts   # Search logic
-│   ├── recommendations/
-│   │   ├── recommendations.router.ts
-│   │   └── recommendations.controller.ts
-│   ├── playlists/
-│   │   ├── playlists.router.ts    # User playlist routes
-│   │   └── playlists.controller.ts # Playlist logic
-│   ├── downloads/
-│   │   ├── downloads.router.ts
-│   │   └── downloads.controller.ts
-│   └── users/
-│       ├── users.router.ts        # User operations
-│       └── users.controller.ts    # User logic
-├── database/
-│   ├── schema.ts                  # Drizzle schema
-│   ├── migrations/                # DB migrations
-│   └── connection.ts              # DB connection
-├── middleware/
-│   ├── auth.ts                    # Clerk auth middleware
-│   ├── cors.ts                    # CORS setup
-│   └── validation.ts              # Request validation
-├── services/
-│   ├── aiService.ts               # AI processing
-│   ├── qdrantService.ts           # Vector DB operations
-│   └── videoService.ts            # Video URL validation
-└── utils/
-    └── embeddingUtils.ts          # Text embedding generation
+movie-platform/
+├── frontend/              # Next.js 16.2.2 App Router application
+│   ├── app/               # App Router pages
+│   │   ├── layout.tsx     # Root layout with Clerk
+│   │   └── page.tsx       # Home page
+│   ├── CLAUDE.md          # Frontend-specific guidance
+│   ├── PROJECT.md         # Detailed project documentation  
+│   └── package.json       # Frontend dependencies
+│
+├── backend/               # Express TypeScript API
+│   ├── src/
+│   │   └── database/      # Drizzle ORM setup
+│   │       ├── schema.ts  # Database schema with Zod validation
+│   │       ├── connection.ts
+│   │       └── index.ts
+│   ├── server.ts          # Express server entry point
+│   ├── drizzle.config.ts  # Drizzle configuration
+│   └── package.json       # Backend dependencies
+│
+└── .claude/
+    └── settings.json      # Claude permissions
 ```
 
----
+## Database Schema (Email-Based User System)
 
-## 🤖 AI Implementation
+**Key Design**: Users identified by email (from Clerk), no Clerk user IDs stored.
 
-### **Qdrant Vector Collections**
-1. **movie_descriptions** - Text embeddings of movie metadata
-2. **user_preferences** - User behavior and preference vectors
+### Core Tables
+- **movies**: Movie metadata with download URLs, uploaded by user email
+- **watchlists**: User playlists linking user emails to movie IDs  
+- **user_behavior**: AI tracking for recommendations (views, likes, downloads)
 
-### **AI Features**
-- **Text Embeddings**: Movie descriptions for semantic search
-- **User Behavior Vectors**: Track viewing patterns, ratings, genre preferences
-- **Recommendation Engine**: Content-based recommendations
-- **Semantic Search**: Natural language query processing
+### Database Operations
+```bash
+# Schema is defined in backend/src/database/schema.ts
+# Uses Drizzle ORM with comprehensive Zod validation schemas
 
----
+cd backend
+pnpm db:generate    # After schema changes
+pnpm db:migrate     # Apply to database
+pnpm db:studio      # Visual database browser
+```
 
-## 🚀 Core Features
+## Feature-Based Backend Architecture
 
-### **User Management**
-- Clerk authentication integration
-- User profiles accessible by email
-- Personal playlist management (watchlists)
-- Guest viewing allowed
+The backend is designed for a feature-based architecture (not yet implemented):
 
-### **Movie Management**
-- Upload movies via URL
-- Basic metadata: title, description, genre, release year, cast
-- Movie poster/thumbnail support
-- Average rating display
+```
+backend/src/features/
+├── movies/           # Movie CRUD operations
+├── search/           # Text + semantic search  
+├── recommendations/  # AI-powered suggestions
+├── playlists/        # User watchlist management
+├── downloads/        # Download tracking
+└── users/           # User operations
+```
 
-### **Platform Features**
-- Free streaming with video player
-- Personal watchlist/playlist functionality
-- Download functionality for offline viewing
-- Watch progress tracking
-- AI-powered content recommendations
-- Basic text search + semantic search
+Each feature contains:
+- `*.router.ts` - Express routes
+- `*.controller.ts` - Business logic
 
----
+## AI Implementation Plan
 
-## 📋 Development Approach
+### Vector Database (Qdrant)
+- **movie_descriptions** collection: Text embeddings for semantic search
+- **user_preferences** collection: User behavior vectors for recommendations
 
-### **Feature-Based Development**
-1. Each feature is self-contained in its own folder
-2. Router and Controller files handle all logic for that feature
-3. Clean separation of concerns
-4. Easy to maintain and scale
+### AI Services (Not Yet Implemented)
+- OpenAI API for text embeddings
+- Semantic search on movie descriptions
+- Content-based recommendations from user behavior
 
-### **Key Principles**
-- Minimal database schema with essential fields only
-- Email-based user identification (no Clerk user ID storage)
-- Simple playlist system via watchlists table
-- On-demand AI processing
-- Feature-based backend organization
+## Development Workflow
 
-### **API Endpoints Structure**
-- `/api/auth/*` - Authentication
-- `/api/movies/*` - Movie operations
-- `/api/search/*` - Search functionality  
-- `/api/recommendations/*` - AI recommendations
-- `/api/playlists/*` - User playlists
-- `/api/downloads/*` - Download management
-- `/api/users/*` - User operations
+### Working with Both Applications
 
----
+1. **Start Development Servers**:
+   ```bash
+   # Terminal 1: Backend
+   cd backend && pnpm dev     # :3001
+   
+   # Terminal 2: Frontend  
+   cd frontend && pnpm dev    # :3000
+   ```
 
-## 🎯 Next Steps
+2. **Database Setup** (First time):
+   ```bash
+   cd backend
+   # Configure DATABASE_URL in .env
+   pnpm db:push              # Push initial schema
+   ```
 
-1. Set up database schema with Drizzle
-2. Implement feature-based backend structure
-3. Create basic frontend pages
-4. Integrate Clerk authentication
-5. Build core movie and playlist functionality
-6. Add AI features with Qdrant integration
+3. **Environment Setup**:
+   - Backend: Copy `.env.example` → `.env`, configure PostgreSQL
+   - Frontend: Copy `.env.example` → `.env.local`, configure Clerk keys
+
+### Working with Individual Components
+
+- **Frontend Only**: Focus on `frontend/` directory, uses existing CLAUDE.md
+- **Backend Only**: Focus on `backend/` directory  
+- **Database Changes**: Always work from `backend/` directory for schema modifications
+
+## API Communication
+
+- **Frontend Port**: 3000
+- **Backend Port**: 3001  
+- **Proxy Setup**: Frontend configured to proxy API calls to backend
+- **Health Check**: `http://localhost:3001/health`
+
+## Key Architectural Decisions
+
+1. **Monorepo Structure**: Separate applications, not using workspaces
+2. **Email-Based Users**: Clerk emails used as user identifiers (no user table)
+3. **Feature-Based Backend**: Organized by business functionality  
+4. **Zod Validation**: Comprehensive request/response validation
+5. **AI-Ready**: Prepared for Qdrant integration and OpenAI embeddings
+
+## Development Status
+
+**Current State**: Foundation phase
+- ✅ Basic project structure established
+- ✅ Database schema defined with Drizzle
+- ✅ Frontend with Clerk authentication
+- ✅ Basic backend server with health endpoint
+
+**Next Phase**: Core feature implementation
+- Movie CRUD operations
+- User playlist management  
+- Basic search functionality
+- Frontend pages and components
+
+**Future**: AI features integration
+- Qdrant vector database setup
+- Semantic search implementation
+- Recommendation engine
+
+## Important Notes
+
+- **Next.js 16.2.2**: Breaking changes from training data - always check documentation
+- **Package Manager**: Use `pnpm` consistently across both applications
+- **Type Safety**: Comprehensive TypeScript setup with Zod validation
+- **Authentication**: Clerk handles auth, backend validates via middleware (to be implemented)
+- **Database**: PostgreSQL with Drizzle ORM, migration-based schema management
