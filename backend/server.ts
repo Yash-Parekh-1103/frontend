@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import moviesRouter from './src/features/movies/movies.router';
+import watchlistsRouter from './src/features/watchlists/watchlists.router';
+import userBehaviorRouter from './src/features/user-behavior/user-behavior.router';
 
 // Load environment variables
 dotenv.config();
@@ -35,6 +37,8 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/movies', moviesRouter);
+app.use('/api/watchlists', watchlistsRouter);
+app.use('/api/behavior', userBehaviorRouter);
 
 // Start server
 app.listen(PORT, () => {
